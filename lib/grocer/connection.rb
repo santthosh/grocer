@@ -38,7 +38,7 @@ module Grocer
         
         # If there is an error disconnect and raise an exception
         if !read.nil? && !read.first.nil?
-          error_response = ssl.read_nonblock 6
+          error_response = ssl.ssl.read_nonblock 6
           error = ErrorResponse.new error_response, content
           destroy_connection
           raise error
@@ -47,9 +47,6 @@ module Grocer
       end
     end
     
-    
-    
-
     def connect
       ssl.connect unless ssl.connected?
     end
