@@ -3,6 +3,7 @@ require 'grocer/no_gateway_error'
 require 'grocer/no_port_error'
 require 'grocer/certificate_expired_error'
 require 'grocer/ssl_connection'
+require 'grocer/error_response'
 
 module Grocer
   class Connection
@@ -26,29 +27,33 @@ module Grocer
 
     def write(content)
       with_connection do
-        ssl.write(content)
+        begin 
+          ssl.write(content)
         
-        read, write, error = IO.select [ssl.ssl], [], [ssl.ssl], DEFAULT_SELECT_WAIT
+          read, write, error = IO.select [ssl.ssl], [], [ssl.ssl], DEFAULT_SELECT_WAIT
         
-        # If there is an error disconnect and raise an exception
-        if !error.nil? && !error.first.nil?
-          destroy_connection
-          raise RuntimeError "IO.select has reported an unexpected error. Please disconnect and retry"
-        end
-        
-        # If there is an error disconnect and raise an exception
-        if !read.nil? && !read.first.nil?
-          error_response = ssl.ssl.read_nonblock 6
-          unless error_response.nil?
-            error = ErrorResponse.new error_response, content
+          # If there is an error disconnect and raise an exception
+          if !error.nil? && !error.first.nil?
             destroy_connection
-            raise error
-          else 
-            destroy_connection
-            raise RuntimeError "There was an unexpected response from APNS service. Please disconnect and retry"
+            raise RuntimeError "IO.select has reported an unexpected error. Please disconnect and retry"
           end
-        end
         
+          # If there is an error disconnect and raise an exception
+          if !read.nil? && !read.first.nil?
+            error_response = ssl.ssl.read_nonblock 6
+            unless error_response.nil?
+              error = ErrorResponse.new error_response, content
+              destroy_connection
+              raise RuntimeError "Error: #{error.code}, #{error.identifier.inspect}, #{error.message}"
+            else 
+              destroy_connection
+              raise RuntimeError "There was an unexpected response from APNS service. Please disconnect and retry"
+            end
+          end
+        rescue Errno::EPIPE => e
+          destroy_connection
+          raise RuntimeError 'Gateway connection returned broken pipe. Please disconnect and retry'
+        end
       end
     end
     
