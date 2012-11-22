@@ -7,6 +7,8 @@ require 'grocer/ssl_connection'
 module Grocer
   class Connection
     attr_reader :certificate, :passphrase, :gateway, :port, :retries
+    
+    DEFAULT_SELECT_WAIT = 0.5
 
     def initialize(options = {})
       @certificate = options.fetch(:certificate) { nil }
@@ -25,8 +27,28 @@ module Grocer
     def write(content)
       with_connection do
         ssl.write(content)
+        
+        read, write, error = IO.select [ssl], [], [ssl], DEFAULT_SELECT_WAIT)
+        
+        # If there is an error disconnect and raise an exception
+        if !error.nil? && !error.first.nil?
+          destroy_connection
+          raise RuntimeError "IO.select has reported an unexpected error. Please disconnect and retry"
+        end
+        
+        # If there is an error disconnect and raise an exception
+        if !read.nil? && !read.first.nil?
+          error_response = ssl.read_nonblock 6
+          error = ErrorResponse.new error_response, content
+          destroy_connection
+          raise error
+        end
+        
       end
     end
+    
+    
+    
 
     def connect
       ssl.connect unless ssl.connected?
