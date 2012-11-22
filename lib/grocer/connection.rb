@@ -28,7 +28,7 @@ module Grocer
       with_connection do
         ssl.write(content)
         
-        read, write, error = IO.select [ssl], [], [ssl], DEFAULT_SELECT_WAIT
+        read, write, error = IO.select [ssl.ssl], [], [ssl.ssl], DEFAULT_SELECT_WAIT
         
         # If there is an error disconnect and raise an exception
         if !error.nil? && !error.first.nil?

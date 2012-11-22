@@ -6,6 +6,7 @@ require 'stringio'
 module Grocer
   class SSLConnection
     extend Forwardable
+    attr_reader :ssl
     def_delegators :@ssl, :write, :read
 
     attr_accessor :certificate, :passphrase, :gateway, :port
