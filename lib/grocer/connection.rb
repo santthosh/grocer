@@ -38,12 +38,13 @@ module Grocer
         
         # If there is an error disconnect and raise an exception
         if !read.nil? && !read.first.nil?
-          destroy_connection
           error_response = ssl.ssl.read_nonblock 6
           unless error_response.nil?
             error = ErrorResponse.new error_response, content
+            destroy_connection
             raise error
           else 
+            destroy_connection
             raise RuntimeError "There was an unexpected response from APNS service. Please disconnect and retry"
           end
         end
