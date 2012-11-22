@@ -35,7 +35,7 @@ module Grocer
           # If there is an error disconnect and raise an exception
           if !error.nil? && !error.first.nil?
             destroy_connection
-            raise RuntimeError "IO.select has reported an unexpected error. Please disconnect and retry"
+            raise RuntimeError, "IO.select has reported an unexpected error. Please disconnect and retry"
           end
         
           # If there is an error disconnect and raise an exception
@@ -44,15 +44,15 @@ module Grocer
             unless error_response.nil?
               error = ErrorResponse.new error_response, content
               destroy_connection
-              raise RuntimeError "Error: #{error.code}, #{error.identifier.inspect}, #{error.message}"
+              raise RuntimeError, "Error: #{error.code}, #{error.identifier.inspect}, #{error.message}"
             else 
               destroy_connection
-              raise RuntimeError "There was an unexpected response from APNS service. Please disconnect and retry"
+              raise RuntimeError, "There was an unexpected response from APNS service. Please disconnect and retry"
             end
           end
         rescue Errno::EPIPE => e
           destroy_connection
-          raise RuntimeError 'Gateway connection returned broken pipe. Please disconnect and retry'
+          raise RuntimeError, 'Gateway connection returned broken pipe. Please disconnect and retry'
         end
       end
     end
