@@ -9,7 +9,7 @@ module Grocer
   class Connection
     attr_reader :certificate, :passphrase, :gateway, :port, :retries
     
-    DEFAULT_SELECT_WAIT = 0.5
+    DEFAULT_SELECT_WAIT = 0.3
 
     def initialize(options = {})
       @certificate = options.fetch(:certificate) { nil }
